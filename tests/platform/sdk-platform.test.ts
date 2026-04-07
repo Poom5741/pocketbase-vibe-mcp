@@ -15,8 +15,8 @@ const mockRecordsDelete = vi.fn();
 
 vi.mock('pocketbase', () => {
   return {
-    default: mockPocketBaseConstructor.mockImplementation(function() {
-      this.baseUrl = '';
+    default: mockPocketBaseConstructor.mockImplementation(function(url: string) {
+      this.baseUrl = url;
       this.collections = {
         getFullList: mockCollectionsGetFullList,
         getOne: mockCollectionsGetOne,
@@ -31,7 +31,13 @@ vi.mock('pocketbase', () => {
         update: mockRecordsUpdate,
         delete: mockRecordsDelete,
       };
-      this.collection = vi.fn().mockReturnThis();
+      this.collection = vi.fn().mockReturnValue({
+        getFullList: mockRecordsGetFullList,
+        getOne: mockRecordsGetOne,
+        create: mockRecordsCreate,
+        update: mockRecordsUpdate,
+        delete: mockRecordsDelete,
+      });
       this.files = {
         getUrl: vi.fn(),
         getFile: vi.fn(),
@@ -41,7 +47,9 @@ vi.mock('pocketbase', () => {
         token: '',
         record: null,
       };
-      this.health = vi.fn();
+      this.health = {
+        check: vi.fn(),
+      };
       return this;
     })
   };
