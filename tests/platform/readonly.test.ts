@@ -128,9 +128,9 @@ describe('Read-Only Operations', () => {
       expect(READ_OPERATIONS).toContain('get_health_status');
     });
 
-    it('should have exactly 9 read operations', async () => {
+    it('should have exactly 10 read operations', async () => {
       const { READ_OPERATIONS } = await import('../../src/platform/readonly');
-      expect(READ_OPERATIONS.length).toBe(9);
+      expect(READ_OPERATIONS.length).toBe(10);
     });
   });
 
