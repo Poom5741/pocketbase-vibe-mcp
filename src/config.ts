@@ -17,6 +17,20 @@ function parseBoolean(value: string | boolean | undefined, defaultValue: boolean
   return defaultValue;
 }
 
+/**
+ * Merges config sources with priority: later sources override earlier ones.
+ * Priority: file < env < cli (cli has highest priority)
+ */
+function mergeConfigs(...sources: Partial<Config>[]): Partial<Config> {
+  const result: Partial<Config> = {};
+  for (const source of sources) {
+    if (source.url !== undefined) result.url = source.url;
+    if (source.adminToken !== undefined) result.adminToken = source.adminToken;
+    if (source.readOnly !== undefined) result.readOnly = source.readOnly;
+  }
+  return result;
+}
+
 function getConfigFilePaths(): string[] {
   const homeDir = os.homedir();
   const xdgConfig = process.env.XDG_CONFIG_HOME;
@@ -46,22 +60,29 @@ function loadConfigFromFile(): Config | null {
   return null;
 }
 
+const CLI_ARG_MAP: Record<string, keyof Config> = {
+  '--url': 'url',
+  '--admin-token': 'adminToken',
+  '--readonly': 'readOnly',
+};
+
 function parseCliArgs(): Partial<Config> {
   const args = process.argv.slice(2);
   const config: Partial<Config> = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    const nextArg = args[i + 1];
+    const configKey = CLI_ARG_MAP[arg];
+    if (!configKey) continue;
 
-    if (arg === '--url' && nextArg) {
-      config.url = nextArg;
-      i++;
-    } else if (arg === '--admin-token' && nextArg) {
-      config.adminToken = nextArg;
-      i++;
-    } else if (arg === '--readonly') {
+    if (configKey === 'readOnly') {
       config.readOnly = true;
+    } else {
+      const nextArg = args[i + 1];
+      if (nextArg) {
+        config[configKey] = nextArg;
+        i++;
+      }
     }
   }
 
@@ -77,40 +98,17 @@ function loadConfigFromEnv(): Partial<Config> {
 }
 
 export function loadConfig(): Config {
-  const config: Config = {
-    url: '',
-    adminToken: '',
-    readOnly: false,
-  };
-
-  const fileConfig = loadConfigFromFile();
-  if (fileConfig) {
-    config.url = fileConfig.url;
-    config.adminToken = fileConfig.adminToken;
-    config.readOnly = fileConfig.readOnly;
-  }
-
+  const fileConfig = loadConfigFromFile() || { url: '', adminToken: '', readOnly: false };
   const envConfig = loadConfigFromEnv();
-  if (envConfig.url !== undefined) {
-    config.url = envConfig.url;
-  }
-  if (envConfig.adminToken !== undefined) {
-    config.adminToken = envConfig.adminToken;
-  }
-  if (envConfig.readOnly !== undefined) {
-    config.readOnly = envConfig.readOnly;
-  }
-
   const cliConfig = parseCliArgs();
-  if (cliConfig.url !== undefined) {
-    config.url = cliConfig.url;
-  }
-  if (cliConfig.adminToken !== undefined) {
-    config.adminToken = cliConfig.adminToken;
-  }
-  if (cliConfig.readOnly !== undefined) {
-    config.readOnly = cliConfig.readOnly;
-  }
+
+  const merged = mergeConfigs(fileConfig, envConfig, cliConfig);
+
+  const config: Config = {
+    url: merged.url || '',
+    adminToken: merged.adminToken || '',
+    readOnly: merged.readOnly ?? false,
+  };
 
   if (!config.url || !config.adminToken) {
     throw new Error('No configuration found. Please provide config via CLI args, environment variables, or config file.');
