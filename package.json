@@ -5,8 +5,11 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "prebuild": "npm run typecheck",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
