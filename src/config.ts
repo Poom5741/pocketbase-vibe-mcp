@@ -71,16 +71,24 @@ function parseCliArgs(): Partial<Config> {
   const config: Partial<Config> = {};
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
+    const arg: string = args[i]!;
+    
+    if (!Object.prototype.hasOwnProperty.call(CLI_ARG_MAP, arg)) {
+      continue;
+    }
+    
     const configKey = CLI_ARG_MAP[arg];
-    if (!configKey) continue;
-
+    
     if (configKey === 'readOnly') {
       config.readOnly = true;
     } else {
       const nextArg = args[i + 1];
       if (nextArg) {
-        config[configKey] = nextArg;
+        if (configKey === 'url') {
+          config.url = nextArg;
+        } else if (configKey === 'adminToken') {
+          config.adminToken = nextArg;
+        }
         i++;
       }
     }
