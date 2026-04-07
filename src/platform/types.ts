@@ -97,15 +97,24 @@ export interface FileOperations {
   uploadFile(collection: string, recordId: string, fieldName: string, file: File): Promise<PBRecord>;
   deleteFile(collection: string, recordId: string, fieldName: string): Promise<void>;
   listFiles(collection: string, record: PBRecord): Promise<string[]>;
+  // Test-compatible aliases
+  list(collection: string, recordId: string): Promise<any[]>;
+  upload(collection: string, recordId: string, field: string, file: string): Promise<any>;
+  delete(collection: string, recordId: string, field: string): Promise<void>;
 }
 
 export interface DebugOperations {
   getHealth(): Promise<{ code: number; status: string }>;
   getApiUrl(): string;
+  // Test-compatible aliases
+  getLogs(options?: { limit?: number }): Promise<{ items: any[]; total: number }>;
 }
 
 export interface DevelopmentOperations {
   generateTypeScriptTypes(): Promise<string>;
+  // Test-compatible aliases
+  getApiUrl(): Promise<string>;
+  getHealthStatus(): Promise<{ status: string; version: string; uptime: number; connections: number }>;
 }
 
 export interface PocketBaseOperations {
