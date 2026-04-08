@@ -4,9 +4,16 @@
  * This is the main entry point for the PocketBase Model Context Protocol Server.
  */
 
-// Minimal entry point for Phase 1 project setup
-export function main(): void {
-  console.log('PocketBase MCP Server initialized');
+import { loadConfig } from './config';
+import { createPocketBaseMCP } from './server';
+import { StdioServerTransport } from '@modelcontextprotocol/server';
+
+async function main() {
+  const config = loadConfig();
+  const { server } = createPocketBaseMCP(config);
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }
 
-main();
+main().catch(console.error);
